@@ -1,0 +1,577 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <stdexcept>
+#include <fstream>
+#include <algorithm>
+#include <memory>
+using namespace std;
+
+template <typename T, typename... Args>
+std::unique_ptr<T> make_unique(Args&&... args) {
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
+
+class Muzica {
+    string titlu;
+    string gen;
+    int durata; // in secunde
+    string artist;
+
+public:
+    // Constructor implicit
+    Muzica() : titlu("Necunoscut"), gen("Necunoscut"), durata(0), artist("Necunoscut") {}
+
+    // Constructor parametrizat
+    Muzica(const string& t, const string& g, int d, const string& a) {
+        if (t.empty()) throw runtime_error("Titlul nu poate fi gol!");
+        if (d <= 0) throw runtime_error("Durata trebuie sa fie pozitiva!");
+        if (a.empty()) throw runtime_error("Artistul nu poate fi gol!");
+
+        titlu = t;
+        gen = g;
+        durata = d;
+        artist = a;
+    }
+
+    // Constructor de copiere
+    Muzica(const Muzica& other)
+        : titlu(other.titlu), gen(other.gen), durata(other.durata), artist(other.artist) {}
+
+    // Operator= de copiere
+    Muzica& operator=(const Muzica& other) {
+        if (this != &other) {
+            titlu = other.titlu;
+            gen = other.gen;
+            durata = other.durata;
+            artist = other.artist;
+        }
+        return *this;
+    }
+
+    // Destructor
+    virtual ~Muzica() = default;
+
+    // Operator >> pentru citire
+    friend istream& operator>>(istream& in, Muzica& m) {
+        cout << "Introduceti titlul: ";
+        getline(in, m.titlu);
+        if (m.titlu.empty()) throw runtime_error("Titlul nu poate fi gol!");
+
+        cout << "Introduceti genul: ";
+        getline(in, m.gen);
+
+        cout << "Introduceti durata (in secunde): ";
+        in >> m.durata;
+        if (m.durata <= 0) throw runtime_error("Durata trebuie sa fie pozitiva!");
+        in.ignore();
+
+        cout << "Introduceti artistul: ";
+        getline(in, m.artist);
+        if (m.artist.empty()) throw runtime_error("Artistul nu poate fi gol!");
+
+        return in;
+    }
+
+    // Operator << pentru afișare
+    friend ostream& operator<<(ostream& out, const Muzica& m) {
+        out << "Titlu: " << m.titlu << ", Gen: " << m.gen << ", Durata: " << m.durata / 60 << " min " << m.durata % 60 << " sec, Artist: " << m.artist;
+        return out;
+    }
+
+    // Operator== pentru comparare
+    bool operator==(const Muzica& other) const {
+        return titlu == other.titlu && gen == other.gen && durata == other.durata && artist == other.artist;
+    }
+
+    // Getters
+    string getTitlu() const { return titlu; }
+    string getGen() const { return gen; }
+    string getArtist() const { return artist; }
+    int getDurata() const { return durata; }
+};
+
+class MuzicaMetal : public Muzica {
+    string subgen;
+
+public:
+    // Constructor implicit și parametrizat
+    MuzicaMetal() : Muzica(), subgen("Necunoscut") {}
+
+    MuzicaMetal(const string& t, const string& a, int d, const string& sg) 
+        : Muzica(t, "Metal", d, a), subgen(sg) {}
+
+    // Constructor de copiere
+    MuzicaMetal(const MuzicaMetal& other)
+        : Muzica(other), subgen(other.subgen) {}
+
+    // Operator= de copiere
+    MuzicaMetal& operator=(const MuzicaMetal& other) {
+        if (this != &other) {
+            Muzica::operator=(other); // Apelăm operator= din baza
+            subgen = other.subgen;
+        }
+        return *this;
+    }
+
+    // Destructor
+    ~MuzicaMetal() override = default;
+
+    // Funcție de afișare
+    void Afiseaza() const {
+        cout << "[Metal] Titlu: " << getTitlu() << ", Gen: " << getGen()
+             << ", Durata: " << getDurata() / 60 << " min " << getDurata() % 60
+             << " sec, Artist: " << getArtist() << ", Subgen: " << subgen << endl;
+    }
+};
+
+class MuzicaRock : public Muzica {
+    bool areSolo;
+
+public:
+    // Constructor implicit și parametrizat
+    MuzicaRock() : Muzica(), areSolo(false) {}
+
+    MuzicaRock(const string& t, const string& a, int d, bool solo) 
+        : Muzica(t, "Rock", d, a), areSolo(solo) {}
+
+    // Constructor de copiere
+    MuzicaRock(const MuzicaRock& other)
+        : Muzica(other), areSolo(other.areSolo) {}
+
+    // Operator= de copiere
+    MuzicaRock& operator=(const MuzicaRock& other) {
+        if (this != &other) {
+            Muzica::operator=(other); // Apelăm operator= din baza
+            areSolo = other.areSolo;
+        }
+        return *this;
+    }
+
+    // Destructor
+    ~MuzicaRock() override = default;
+
+    // Funcție de afișare
+    void Afiseaza() const {
+        cout << "[Rock] Titlu: " << getTitlu() << ", Gen: " << getGen()
+             << ", Durata: " << getDurata() / 60 << " min " << getDurata() % 60
+             << " sec, Artist: " << getArtist() << ", Are solo: "
+             << (areSolo ? "Da" : "Nu") << endl;
+    }
+};
+
+class MuzicaPop : public Muzica {
+    int nivelPopularitate;
+
+public:
+    // Constructor implicit și parametrizat
+    MuzicaPop() : Muzica(), nivelPopularitate(0) {}
+
+    MuzicaPop(const string& t, const string& a, int d, int popularitate) 
+        : Muzica(t, "Pop", d, a), nivelPopularitate(popularitate) {}
+
+    // Constructor de copiere
+    MuzicaPop(const MuzicaPop& other)
+        : Muzica(other), nivelPopularitate(other.nivelPopularitate) {}
+
+    // Operator= de copiere
+    MuzicaPop& operator=(const MuzicaPop& other) {
+        if (this != &other) {
+            Muzica::operator=(other); // Apelăm operator= din baza
+            nivelPopularitate = other.nivelPopularitate;
+        }
+        return *this;
+    }
+
+    // Destructor
+    ~MuzicaPop() override = default;
+
+    // Funcție de afișare
+    void Afiseaza() const {
+        cout << "[Pop] Titlu: " << getTitlu() << ", Gen: " << getGen()
+             << ", Durata: " << getDurata() / 60 << " min " << getDurata() % 60
+             << " sec, Artist: " << getArtist() << ", Popularitate: "
+             << nivelPopularitate << "/10" << endl;
+    }
+};
+
+class Playlist {
+    vector<Muzica> melodii;
+
+public:
+    // Constructor implicit existent
+    Playlist() = default;
+
+    // Constructor de copiere
+    Playlist(const Playlist& other)
+        : melodii(other.melodii) {}
+
+    // Operator= de copiere
+    Playlist& operator=(const Playlist& other) {
+        if (this != &other) {
+            melodii = other.melodii; // Vectorul efectuează copierea elementelor
+        }
+        return *this;
+    }
+
+    // Destructor
+    ~Playlist() = default;
+
+    void AddSong(const Muzica& m) {
+        melodii.push_back(m);
+        cout << "Melodia a fost adaugata cu succes.\n";
+    }
+
+    bool DeleteSong(const Muzica& m) {
+        for (auto it = melodii.begin(); it != melodii.end(); ++it) {
+            if (*it == m) {
+                melodii.erase(it);
+                cout << "Melodia a fost stearsa cu succes.\n";
+                return true;
+            }
+        }
+        throw runtime_error("Melodia nu a fost gasita in playlist!");
+    }
+
+    void ShowAll() const {
+        if (melodii.empty()) {
+            cout << "Playlist-ul este gol.\n";
+            return;
+        }
+
+        cout << "Melodii in playlist:\n";
+        for (const auto& m : melodii) {
+            cout << m << endl;
+        }
+    }
+
+    void SaveToFile(const string& filename) const {
+        ofstream outFile(filename);
+        if (!outFile) {
+            throw runtime_error("Eroare la deschiderea fisierului pentru scriere!");
+        }
+
+        for (const auto& m : melodii) {
+            outFile << m.getTitlu() << '\n' << m.getGen() << '\n' << m.getDurata() << '\n' << m.getArtist() << '\n';
+        }
+
+        cout << "Playlist-ul a fost salvat in fisierul " << filename << ".\n";
+    }
+
+    void LoadFromFile(const string& filename) {
+        ifstream inFile(filename);
+        if (!inFile) {
+            throw runtime_error("Eroare la deschiderea fisierului pentru citire!");
+        }
+
+        melodii.clear();
+        string titlu, gen, artist;
+        int durata;
+
+        while (getline(inFile, titlu) && getline(inFile, gen) && (inFile >> durata) && inFile.ignore() && getline(inFile, artist)) {
+            melodii.emplace_back(titlu, gen, durata, artist);
+        }
+
+        cout << "Playlist-ul a fost incarcat din fisierul " << filename << ".\n";
+    }
+
+    void SortSongs() {
+        if (melodii.empty()) {
+            cout << "Playlist-ul este gol. Nu exista nimic de sortat.\n";
+            return;
+        }
+
+        int optiune;
+        cout << "Cum doriti sa sortati melodiile?\n";
+        cout << "1. Dupa titlu\n";
+        cout << "2. Dupa artist\n";
+        cout << "Alege o optiune: ";
+        cin >> optiune;
+        cin.ignore();
+
+        if (optiune == 1) {
+            sort(melodii.begin(), melodii.end(), [](const Muzica& a, const Muzica& b) {
+                return a.getTitlu() < b.getTitlu();
+            });
+            cout << "Melodiile au fost sortate dupa titlu.\n";
+        } else if (optiune == 2) {
+            sort(melodii.begin(), melodii.end(), [](const Muzica& a, const Muzica& b) {
+                return a.getArtist() < b.getArtist();
+            });
+            cout << "Melodiile au fost sortate dupa artist.\n";
+        } else {
+            cout << "Optiune invalida.\n";
+        }
+    }
+};
+
+
+class PlaylistManager {
+private:
+    static unique_ptr<PlaylistManager> instance;
+    vector<Playlist> playlists;
+
+    PlaylistManager() {} // Constructor privat
+
+public:
+    static PlaylistManager& GetInstance() {
+        if (!instance) {
+            instance = std::unique_ptr<PlaylistManager>(new PlaylistManager());
+        }
+        return *instance;
+    }
+
+    void AddPlaylist(const Playlist& playlist) {
+        playlists.push_back(playlist);
+        cout << "Playlist adaugat cu succes.\n";
+    }
+
+    void ShowAllPlaylists() const {
+        if (playlists.empty()) {
+            cout << "Nu exista playlisturi.\n";
+            return;
+        }
+
+        cout << "\n****** Toate Playlisturile ******\n";
+        for (size_t i = 0; i < playlists.size(); ++i) {
+            cout << "Playlist " << i + 1 << ":\n";
+            playlists[i].ShowAll();
+            cout << "--------------------\n";
+        }
+    }
+
+    size_t GetPlaylistsCount() const {
+        return playlists.size();
+    }
+
+    Playlist& GetPlaylist(size_t index) {
+        if (index >= playlists.size()) {
+            throw runtime_error("Index invalid pentru playlist!");
+        }
+        return playlists[index];
+    }
+
+    const Playlist& GetPlaylist(size_t index) const {
+        if (index >= playlists.size()) {
+            throw runtime_error("Index invalid pentru playlist!");
+        }
+        return playlists[index];
+    }
+};
+
+int SelectPlaylist(PlaylistManager& manager) {
+    manager.ShowAllPlaylists();
+    cout << "Selectati numarul playlistului: ";
+    int index;
+    cin >> index;
+    cin.ignore();
+    if (index <= 0 || index > manager.GetPlaylistsCount()) {
+        throw runtime_error("Numar de playlist invalid!");
+    }
+    return index - 1; // Ajustăm pentru indexul vectorului
+}
+
+
+void ManagePlaylist(Playlist& playlist) {
+    while (true) {
+        cout << "\n********** Gestionare Playlist **********\n";
+        cout << "1. Adauga melodie\n";
+        cout << "2. Sterge melodie\n";
+        cout << "3. Afiseaza toate melodiile\n";
+        cout << "4. Sorteaza melodiile\n";
+        cout << "5. Salveaza playlist-ul in fisier\n";
+        cout << "6. Incarca playlist-ul din fisier\n";
+        cout << "7. Revenire la meniul principal\n";
+        cout << "Alege o optiune: ";
+        int optiune;
+        cin >> optiune;
+        cin.ignore();
+
+        try {
+            switch (optiune) {
+                case 1: {
+                    Muzica m;
+                    cin >> m;
+                    playlist.AddSong(m);
+                    break;
+                }
+                case 2: {
+                    Muzica m;
+                    cin >> m;
+                    playlist.DeleteSong(m);
+                    break;
+                }
+                case 3:
+                    playlist.ShowAll();
+                    break;
+                case 4:
+                    playlist.SortSongs();
+                    break;
+                case 5: {
+                    string filename;
+                    cout << "Introduceti numele fisierului pentru salvare: ";
+                    cin >> filename;
+                    playlist.SaveToFile(filename);
+                    break;
+                }
+                case 6: {
+                    string filename;
+                    cout << "Introduceti numele fisierului pentru incarcare: ";
+                    cin >> filename;
+                    playlist.LoadFromFile(filename);
+                    break;
+                }
+                case 7:
+                    return; // Revenim la meniul principal
+                default:
+                    cout << "Optiune invalida. Incearca din nou.\n";
+                    break;
+            }
+        } catch (const runtime_error& e) {
+            cout << "Eroare: " << e.what() << endl;
+        }
+    }
+}
+
+// Funcția CreatePlaylist
+unique_ptr<PlaylistManager> PlaylistManager::instance = nullptr;
+
+Playlist CreatePlaylist() {
+    Playlist playlist;
+    int optiune;
+
+    while (true) {
+        cout << "\nAdaugati melodii in playlist:\n";
+        cout << "1. Adauga melodie generica\n";
+        cout << "2. Adauga melodie Metal\n";
+        cout << "3. Adauga melodie Rock\n";
+        cout << "4. Adauga melodie Pop\n";
+        cout << "5. Terminati de adaugat\n";
+        cout << "Alege o optiune: ";
+        cin >> optiune;
+        cin.ignore();
+
+        if (optiune == 1) {
+            Muzica m;
+            try {
+                cin >> m;
+                playlist.AddSong(m);
+            } catch (const runtime_error& e) {
+                cout << "Eroare: " << e.what() << endl;
+            }
+        } else if (optiune == 2) {
+            string titlu, artist, subgen;
+            int durata;
+
+            cout << "Introduceti titlul: ";
+            getline(cin, titlu);
+            cout << "Introduceti artistul: ";
+            getline(cin, artist);
+            cout << "Introduceti durata (in secunde): ";
+            cin >> durata;
+            cin.ignore();
+            cout << "Introduceti subgenul: ";
+            getline(cin, subgen);
+
+            try {
+                MuzicaMetal m(titlu, artist, durata, subgen);
+                playlist.AddSong(m);
+            } catch (const runtime_error& e) {
+                cout << "Eroare: " << e.what() << endl;
+            }
+        } else if (optiune == 3) {
+            string titlu, artist;
+            int durata;
+            bool areSolo;
+
+            cout << "Introduceti titlul: ";
+            getline(cin, titlu);
+            cout << "Introduceti artistul: ";
+            getline(cin, artist);
+            cout << "Introduceti durata (in secunde): ";
+            cin >> durata;
+            cin.ignore();
+            cout << "Are solo de chitara? (1 = Da, 0 = Nu): ";
+            cin >> areSolo;
+            cin.ignore();
+
+            try {
+                MuzicaRock m(titlu, artist, durata, areSolo);
+                playlist.AddSong(m);
+            } catch (const runtime_error& e) {
+                cout << "Eroare: " << e.what() << endl;
+            }
+        } else if (optiune == 4) {
+            string titlu, artist;
+            int durata, popularitate;
+
+            cout << "Introduceti titlul: ";
+            getline(cin, titlu);
+            cout << "Introduceti artistul: ";
+            getline(cin, artist);
+            cout << "Introduceti durata (in secunde): ";
+            cin >> durata;
+            cin.ignore();
+            cout << "Introduceti nivelul de popularitate (1-10): ";
+            cin >> popularitate;
+            cin.ignore();
+
+            try {
+                MuzicaPop m(titlu, artist, durata, popularitate);
+                playlist.AddSong(m);
+            } catch (const runtime_error& e) {
+                cout << "Eroare: " << e.what() << endl;
+            }
+        } else if (optiune == 5) {
+            break;
+        } else {
+            cout << "Optiune invalida. Incearca din nou.\n";
+        }
+    }
+
+    return playlist;
+}
+
+// Funcția principală main
+int main() {
+    PlaylistManager& manager = PlaylistManager::GetInstance();
+
+    while (true) {
+        cout << "\n********** Manager Playlist **********\n";
+        cout << "1. Adauga un playlist\n";
+        cout << "2. Afiseaza toate playlisturile\n";
+        cout << "3. Gestionati un playlist\n";
+        cout << "4. Iesire\n";
+        cout << "Alege o optiune: ";
+        int optiune;
+        cin >> optiune;
+        cin.ignore();
+
+        try {
+            switch (optiune) {
+                case 1: {
+                    Playlist p = CreatePlaylist();
+                    manager.AddPlaylist(p);
+                    break;
+                }
+                case 2:
+                    manager.ShowAllPlaylists();
+                    break;
+                case 3: {
+                    int index = SelectPlaylist(manager);
+                    ManagePlaylist(manager.GetPlaylist(index));
+                    break;
+                }
+                case 4:
+                    cout << "Iesire din aplicatie...\n";
+                    return 0;
+                default:
+                    cout << "Optiune invalida. Incearca din nou.\n";
+                    break;
+            }
+        } catch (const runtime_error& e) {
+            cout << "Eroare: " << e.what() << endl;
+        }
+    }
+} 
+
