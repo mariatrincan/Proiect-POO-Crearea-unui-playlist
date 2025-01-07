@@ -5,6 +5,7 @@
 #include <fstream>
 #include <algorithm>
 #include <memory>
+#include <numeric>
 using namespace std;
 
 template <typename T, typename... Args>
@@ -38,7 +39,7 @@ public:
     Muzica(const Muzica& other)
         : titlu(other.titlu), gen(other.gen), durata(other.durata), artist(other.artist) {}
 
-    // Operator= de copiere
+    // Operator = de copiere
     Muzica& operator=(const Muzica& other) {
         if (this != &other) {
             titlu = other.titlu;
@@ -79,7 +80,7 @@ public:
         return out;
     }
 
-    // Operator== pentru comparare
+    // Operator == pentru comparare
     bool operator==(const Muzica& other) const {
         return titlu == other.titlu && gen == other.gen && durata == other.durata && artist == other.artist;
     }
@@ -105,7 +106,7 @@ public:
     MuzicaMetal(const MuzicaMetal& other)
         : Muzica(other), subgen(other.subgen) {}
 
-    // Operator= de copiere
+    // Operator = de copiere
     MuzicaMetal& operator=(const MuzicaMetal& other) {
         if (this != &other) {
             Muzica::operator=(other); // Apelăm operator= din baza
@@ -139,7 +140,7 @@ public:
     MuzicaRock(const MuzicaRock& other)
         : Muzica(other), areSolo(other.areSolo) {}
 
-    // Operator= de copiere
+    // Operator = de copiere
     MuzicaRock& operator=(const MuzicaRock& other) {
         if (this != &other) {
             Muzica::operator=(other); // Apelăm operator= din baza
@@ -174,7 +175,7 @@ public:
     MuzicaPop(const MuzicaPop& other)
         : Muzica(other), nivelPopularitate(other.nivelPopularitate) {}
 
-    // Operator= de copiere
+    // Operator = de copiere
     MuzicaPop& operator=(const MuzicaPop& other) {
         if (this != &other) {
             Muzica::operator=(other); // Apelăm operator= din baza
@@ -197,19 +198,24 @@ public:
 
 class Playlist {
     vector<Muzica> melodii;
+    string nume; // Numele playlistului
 
 public:
     // Constructor implicit existent
-    Playlist() = default;
+    Playlist() : nume("Playlist Fără Nume") {}
+
+    // Constructor parametrizat
+    explicit Playlist(const string& numePlaylist) : nume(numePlaylist) {}
 
     // Constructor de copiere
     Playlist(const Playlist& other)
-        : melodii(other.melodii) {}
+        : melodii(other.melodii), nume(other.nume) {}
 
-    // Operator= de copiere
+    // Operator = de copiere
     Playlist& operator=(const Playlist& other) {
         if (this != &other) {
-            melodii = other.melodii; // Vectorul efectuează copierea elementelor
+            melodii = other.melodii;
+            nume = other.nume;
         }
         return *this;
     }
@@ -217,6 +223,18 @@ public:
     // Destructor
     ~Playlist() = default;
 
+    // Metodă pentru a obține numele playlistului
+    string getNume() const {
+        return nume;
+    }
+
+    // Metodă pentru a seta un nou nume pentru playlist
+    void setNume(const string& nouNume) {
+        if (nouNume.empty()) {
+            throw runtime_error("Numele nu poate fi gol!");
+        }
+        nume = nouNume;
+    }
     void AddSong(const Muzica& m) {
         melodii.push_back(m);
         cout << "Melodia a fost adaugata cu succes.\n";
@@ -303,6 +321,9 @@ public:
             cout << "Optiune invalida.\n";
         }
     }
+    const vector<Muzica>& getMelodii() const {
+        return melodii;
+    }
 };
 
 
@@ -323,22 +344,32 @@ public:
 
     void AddPlaylist(const Playlist& playlist) {
         playlists.push_back(playlist);
-        cout << "Playlist adaugat cu succes.\n";
+        cout << "Playlist \"" << playlist.getNume() << "\" adaugat cu succes.\n";
     }
+
+    void RenamePlaylist(size_t index, const string& nouNume) {
+        if (index >= playlists.size()) {
+            throw runtime_error("Index invalid pentru playlist!");
+        }
+        playlists[index].setNume(nouNume);
+        cout << "Playlist redenumit cu succes în \"" << nouNume << "\".\n";
+    }
+
 
     void ShowAllPlaylists() const {
-        if (playlists.empty()) {
-            cout << "Nu exista playlisturi.\n";
-            return;
-        }
-
-        cout << "\n****** Toate Playlisturile ******\n";
-        for (size_t i = 0; i < playlists.size(); ++i) {
-            cout << "Playlist " << i + 1 << ":\n";
-            playlists[i].ShowAll();
-            cout << "--------------------\n";
-        }
+    if (playlists.empty()) {
+        cout << "Nu exista playlisturi.\n";
+        return;
     }
+
+    cout << "\n****** Toate Playlisturile ******\n";
+    for (size_t i = 0; i < playlists.size(); ++i) {
+        cout << "Playlist " << i + 1 << ": " << playlists[i].getNume() << "\n";
+        playlists[i].ShowAll();
+        cout << "--------------------\n";
+    }
+}
+
 
     size_t GetPlaylistsCount() const {
         return playlists.size();
@@ -357,6 +388,64 @@ public:
         }
         return playlists[index];
     }
+    
+
+
+};
+template <typename T>
+class StatisticiPlaylist {
+    std::vector<T> valori;
+
+public:
+   
+    void AdaugaValoare(const T& valoare) {
+        valori.push_back(valoare);
+    }
+
+    // Calcularea sumei valorilor
+    T Suma() const {
+        if (valori.empty()) {
+            throw std::runtime_error("Nu există valori pentru calcul.");
+        }
+        return std::accumulate(valori.begin(), valori.end(), T(0));
+    }
+
+    // Calcularea mediei valorilor
+    T Medie() const {
+        if (valori.empty()) {
+            throw std::runtime_error("Nu există valori pentru calcul.");
+        }
+        return Suma() / static_cast<T>(valori.size());
+    }
+
+    // Găsirea valorii maxime
+    T Max() const {
+        if (valori.empty()) {
+            throw std::runtime_error("Nu există valori pentru calcul.");
+        }
+        return *std::max_element(valori.begin(), valori.end());
+    }
+
+    // Găsirea valorii minime
+    T Min() const {
+        if (valori.empty()) {
+            throw std::runtime_error("Nu există valori pentru calcul.");
+        }
+        return *std::min_element(valori.begin(), valori.end());
+    }
+
+  
+    void AfiseazaValori() const {
+        if (valori.empty()) {
+            std::cout << "Nu există valori de afișat.\n";
+            return;
+        }
+        std::cout << "Valori în statistici: ";
+        for (const auto& v : valori) {
+            std::cout << v << " ";
+        }
+        std::cout << "\n";
+    }
 };
 
 int SelectPlaylist(PlaylistManager& manager) {
@@ -368,20 +457,24 @@ int SelectPlaylist(PlaylistManager& manager) {
     if (index <= 0 || index > manager.GetPlaylistsCount()) {
         throw runtime_error("Numar de playlist invalid!");
     }
-    return index - 1; // Ajustăm pentru indexul vectorului
+    return index - 1; 
 }
 
 
 void ManagePlaylist(Playlist& playlist) {
     while (true) {
         cout << "\n********** Gestionare Playlist **********\n";
-        cout << "1. Adauga melodie\n";
-        cout << "2. Sterge melodie\n";
-        cout << "3. Afiseaza toate melodiile\n";
-        cout << "4. Sorteaza melodiile\n";
-        cout << "5. Salveaza playlist-ul in fisier\n";
-        cout << "6. Incarca playlist-ul din fisier\n";
-        cout << "7. Revenire la meniul principal\n";
+        cout << "1. Adauga melodie generica\n";
+        cout << "2. Adauga melodie Metal\n";
+        cout << "3. Adauga melodie Rock\n";
+        cout << "4. Adauga melodie Pop\n";
+        cout << "5. Sterge melodie\n";
+        cout << "6. Afiseaza toate melodiile\n";
+        cout << "7. Sorteaza melodiile\n";
+        cout << "8. Salveaza playlist-ul in fisier\n";
+        cout << "9. Incarca playlist-ul din fisier\n";
+        cout << "10. Calculeaza statistici despre durata melodiilor\n";
+        cout << "11. Revenire la meniul principal\n";
         cout << "Alege o optiune: ";
         int optiune;
         cin >> optiune;
@@ -396,33 +489,103 @@ void ManagePlaylist(Playlist& playlist) {
                     break;
                 }
                 case 2: {
+                    string titlu, artist, subgen;
+                    int durata;
+
+                    cout << "Introduceti titlul: ";
+                    getline(cin, titlu);
+                    cout << "Introduceti artistul: ";
+                    getline(cin, artist);
+                    cout << "Introduceti durata (in secunde): ";
+                    cin >> durata;
+                    cin.ignore();
+                    cout << "Introduceti subgenul: ";
+                    getline(cin, subgen);
+
+                    MuzicaMetal m(titlu, artist, durata, subgen);
+                    playlist.AddSong(m);
+                    break;
+                }
+                case 3: {
+                    string titlu, artist;
+                    int durata;
+                    bool areSolo;
+
+                    cout << "Introduceti titlul: ";
+                    getline(cin, titlu);
+                    cout << "Introduceti artistul: ";
+                    getline(cin, artist);
+                    cout << "Introduceti durata (in secunde): ";
+                    cin >> durata;
+                    cin.ignore();
+                    cout << "Are solo de chitara? (1 = Da, 0 = Nu): ";
+                    cin >> areSolo;
+                    cin.ignore();
+
+                    MuzicaRock m(titlu, artist, durata, areSolo);
+                    playlist.AddSong(m);
+                    break;
+                }
+                case 4: {
+                    string titlu, artist;
+                    int durata, popularitate;
+
+                    cout << "Introduceti titlul: ";
+                    getline(cin, titlu);
+                    cout << "Introduceti artistul: ";
+                    getline(cin, artist);
+                    cout << "Introduceti durata (in secunde): ";
+                    cin >> durata;
+                    cin.ignore();
+                    cout << "Introduceti nivelul de popularitate (1-10): ";
+                    cin >> popularitate;
+                    cin.ignore();
+
+                    MuzicaPop m(titlu, artist, durata, popularitate);
+                    playlist.AddSong(m);
+                    break;
+                }
+                case 5: {
                     Muzica m;
                     cin >> m;
                     playlist.DeleteSong(m);
                     break;
                 }
-                case 3:
+                case 6:
                     playlist.ShowAll();
                     break;
-                case 4:
+                case 7:
                     playlist.SortSongs();
                     break;
-                case 5: {
+                case 8: {
                     string filename;
                     cout << "Introduceti numele fisierului pentru salvare: ";
                     cin >> filename;
                     playlist.SaveToFile(filename);
                     break;
                 }
-                case 6: {
+                case 9: {
                     string filename;
                     cout << "Introduceti numele fisierului pentru incarcare: ";
                     cin >> filename;
                     playlist.LoadFromFile(filename);
                     break;
                 }
-                case 7:
-                    return; // Revenim la meniul principal
+                case 10: {
+                    StatisticiPlaylist<int> statistici;
+                    for (const auto& melodie : playlist.getMelodii()) {
+                        statistici.AdaugaValoare(melodie.getDurata());
+                    }
+
+                    cout << "Statistici despre duratele melodiilor:\n";
+                    cout << "Suma: " << statistici.Suma() << " secunde\n";
+                    cout << "Media: " << statistici.Medie() << " secunde\n";
+                    cout << "Maxim: " << statistici.Max() << " secunde\n";
+                    cout << "Minim: " << statistici.Min() << " secunde\n";
+                    break;
+                }
+                case 11:
+                    return;
                 default:
                     cout << "Optiune invalida. Incearca din nou.\n";
                     break;
@@ -432,6 +595,7 @@ void ManagePlaylist(Playlist& playlist) {
         }
     }
 }
+
 
 // Funcția CreatePlaylist
 unique_ptr<PlaylistManager> PlaylistManager::instance = nullptr;
@@ -532,7 +696,7 @@ Playlist CreatePlaylist() {
     return playlist;
 }
 
-// Funcția principală main
+
 int main() {
     PlaylistManager& manager = PlaylistManager::GetInstance();
 
@@ -541,7 +705,8 @@ int main() {
         cout << "1. Adauga un playlist\n";
         cout << "2. Afiseaza toate playlisturile\n";
         cout << "3. Gestionati un playlist\n";
-        cout << "4. Iesire\n";
+        cout << "4. Redenumește un playlist\n";
+        cout << "5. Iesire\n";
         cout << "Alege o optiune: ";
         int optiune;
         cin >> optiune;
@@ -550,7 +715,10 @@ int main() {
         try {
             switch (optiune) {
                 case 1: {
-                    Playlist p = CreatePlaylist();
+                    string nume;
+                    cout << "Introduceti numele noului playlist: ";
+                    getline(cin, nume);
+                    Playlist p(nume);
                     manager.AddPlaylist(p);
                     break;
                 }
@@ -562,7 +730,15 @@ int main() {
                     ManagePlaylist(manager.GetPlaylist(index));
                     break;
                 }
-                case 4:
+                case 4: {
+                    int index = SelectPlaylist(manager);
+                    cout << "Introduceti noul nume pentru playlist: ";
+                    string nouNume;
+                    getline(cin, nouNume);
+                    manager.RenamePlaylist(index, nouNume);
+                    break;
+                }
+                case 5:
                     cout << "Iesire din aplicatie...\n";
                     return 0;
                 default:
@@ -573,5 +749,22 @@ int main() {
             cout << "Eroare: " << e.what() << endl;
         }
     }
+
+    try {
+        StatisticiPlaylist<int> statisticiDurate;
+
+  // Afișăm valorile
+        statisticiDurate.AfiseazaValori();
+
+        // Calculăm statistici
+        std::cout << "Suma duratelor: " << statisticiDurate.Suma() << " secunde\n";
+        std::cout << "Durata medie: " << statisticiDurate.Medie() << " secunde\n";
+        std::cout << "Durata maxima: " << statisticiDurate.Max() << " secunde\n";
+        std::cout << "Durata minima: " << statisticiDurate.Min() << " secunde\n";
+    } catch (const std::runtime_error& e) {
+        std::cerr << "Eroare: " << e.what() << "\n";
+    }
+
+    return 0;
 } 
 
