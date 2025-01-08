@@ -10,10 +10,11 @@ using namespace std;
 
 template <typename T, typename... Args>
 std::unique_ptr<T> make_unique(Args&&... args) {
-    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...)); //Am folosit pentru a aloca dinamic un obiect
+    //si pentru a-i gestiona memoria
 }
 
-class Muzica {
+class Muzica { //reprezinta o melodie generica cu atributele principale
     string titlu;
     string gen;
     int durata; // in secunde
@@ -21,43 +22,49 @@ class Muzica {
 
 public:
     // Constructor implicit
-    Muzica() : titlu("Necunoscut"), gen("Necunoscut"), durata(0), artist("Necunoscut") {}
+    Muzica() : titlu("Necunoscut"),artist("Necunoscut"), gen("Necunoscut"), durata(0) {}
 
     // Constructor parametrizat
     Muzica(const string& t, const string& g, int d, const string& a) {
         if (t.empty()) throw runtime_error("Titlul nu poate fi gol!");
-        if (d <= 0) throw runtime_error("Durata trebuie sa fie pozitiva!");
         if (a.empty()) throw runtime_error("Artistul nu poate fi gol!");
+        if (d <= 0) throw runtime_error("Durata trebuie sa fie pozitiva!");
+
 
         titlu = t;
         gen = g;
         durata = d;
         artist = a;
-    }
+    } //initializeaza atributele cu valori date si verifica validitatea lor
 
     // Constructor de copiere
     Muzica(const Muzica& other)
         : titlu(other.titlu), gen(other.gen), durata(other.durata), artist(other.artist) {}
+   //creeaza o copie a unui obiect muzica
 
-    // Operator = de copiere
+    // Operator = de atribuire
     Muzica& operator=(const Muzica& other) {
         if (this != &other) {
             titlu = other.titlu;
             gen = other.gen;
             durata = other.durata;
             artist = other.artist;
-        }
+        } //copiaza valorile din alt obiect muzica
         return *this;
-    }
+    } //nu se creeaza un nou obiect
 
     // Destructor
-    virtual ~Muzica() = default;
+    virtual ~Muzica() = default; //permite distrugerea corecta daca e mostenita
 
     // Operator >> pentru citire
     friend istream& operator>>(istream& in, Muzica& m) {
         cout << "Introduceti titlul: ";
         getline(in, m.titlu);
         if (m.titlu.empty()) throw runtime_error("Titlul nu poate fi gol!");
+
+        cout << "Introduceti artistul: ";
+        getline(in, m.artist);
+        if (m.artist.empty()) throw runtime_error("Artistul nu poate fi gol!");
 
         cout << "Introduceti genul: ";
         getline(in, m.gen);
@@ -66,10 +73,6 @@ public:
         in >> m.durata;
         if (m.durata <= 0) throw runtime_error("Durata trebuie sa fie pozitiva!");
         in.ignore();
-
-        cout << "Introduceti artistul: ";
-        getline(in, m.artist);
-        if (m.artist.empty()) throw runtime_error("Artistul nu poate fi gol!");
 
         return in;
     }
@@ -85,28 +88,31 @@ public:
         return titlu == other.titlu && gen == other.gen && durata == other.durata && artist == other.artist;
     }
 
-    // Getters
+    // functii pentru a accesa valorile atributelor private ale clasei din afara acesteia
+    //fara a le modifica
     string getTitlu() const { return titlu; }
     string getGen() const { return gen; }
     string getArtist() const { return artist; }
     int getDurata() const { return durata; }
 };
-
+//clase derivate din clasa de baza muzica, ce reprezinta fiecare cate un gen anume
 class MuzicaMetal : public Muzica {
     string subgen;
 
 public:
-    // Constructor implicit și parametrizat
-    MuzicaMetal() : Muzica(), subgen("Necunoscut") {}
 
-    MuzicaMetal(const string& t, const string& a, int d, const string& sg) 
+    MuzicaMetal() : Muzica(), subgen("Necunoscut") {}
+    //Constructor parametrizat ce apeleaza constructorul parametrizat al clasei de baza Muzica
+    MuzicaMetal(const string& t, const string& a, int d, const string& sg)
         : Muzica(t, "Metal", d, a), subgen(sg) {}
 
-    // Constructor de copiere
+    // Constructor de copiere ce copiaza valorile dintr-un alt obiect MuzicaMetal folosind
+
+    //constructorul de copiere al clasei Muzica
     MuzicaMetal(const MuzicaMetal& other)
         : Muzica(other), subgen(other.subgen) {}
 
-    // Operator = de copiere
+    // Operator = de atribuire
     MuzicaMetal& operator=(const MuzicaMetal& other) {
         if (this != &other) {
             Muzica::operator=(other); // Apelăm operator= din baza
@@ -116,7 +122,7 @@ public:
     }
 
     // Destructor
-    ~MuzicaMetal() override = default;
+    ~MuzicaMetal() override = default; //stergerea corecta in caz de polimorfism
 
     // Funcție de afișare
     void Afiseaza() const {
@@ -133,14 +139,14 @@ public:
     // Constructor implicit și parametrizat
     MuzicaRock() : Muzica(), areSolo(false) {}
 
-    MuzicaRock(const string& t, const string& a, int d, bool solo) 
+    MuzicaRock(const string& t, const string& a, int d, bool solo)
         : Muzica(t, "Rock", d, a), areSolo(solo) {}
 
     // Constructor de copiere
     MuzicaRock(const MuzicaRock& other)
         : Muzica(other), areSolo(other.areSolo) {}
 
-    // Operator = de copiere
+    // Operator = de atribuire
     MuzicaRock& operator=(const MuzicaRock& other) {
         if (this != &other) {
             Muzica::operator=(other); // Apelăm operator= din baza
@@ -168,14 +174,14 @@ public:
     // Constructor implicit și parametrizat
     MuzicaPop() : Muzica(), nivelPopularitate(0) {}
 
-    MuzicaPop(const string& t, const string& a, int d, int popularitate) 
+    MuzicaPop(const string& t, const string& a, int d, int popularitate)
         : Muzica(t, "Pop", d, a), nivelPopularitate(popularitate) {}
 
     // Constructor de copiere
     MuzicaPop(const MuzicaPop& other)
         : Muzica(other), nivelPopularitate(other.nivelPopularitate) {}
 
-    // Operator = de copiere
+    // Operator = de atribuire
     MuzicaPop& operator=(const MuzicaPop& other) {
         if (this != &other) {
             Muzica::operator=(other); // Apelăm operator= din baza
@@ -197,23 +203,23 @@ public:
 };
 
 class Playlist {
-    vector<Muzica> melodii;
-    string nume; // Numele playlistului
+    vector<Muzica> melodii; //stocheaza obiecte de tip Muzica, reprezinta lista de melodii din playlist
+    string nume; // numele playlistului
 
 public:
-    // Constructor implicit existent
+    // Constructor implicit
     Playlist() : nume("Playlist Fără Nume") {}
 
     // Constructor parametrizat
     explicit Playlist(const string& numePlaylist) : nume(numePlaylist) {}
 
     // Constructor de copiere
-    Playlist(const Playlist& other)
+    Playlist(const Playlist& other) //creeaza o copie a unui alt playlist
         : melodii(other.melodii), nume(other.nume) {}
-
-    // Operator = de copiere
+     //copiaza lista de melodii si numele playlistului
+    // Operator = de atribuire
     Playlist& operator=(const Playlist& other) {
-        if (this != &other) {
+        if (this != &other) { //se verifica autoatribuirea
             melodii = other.melodii;
             nume = other.nume;
         }
@@ -229,7 +235,7 @@ public:
     }
 
     // Metodă pentru a seta un nou nume pentru playlist
-    void setNume(const string& nouNume) {
+    void setNume(const string& nouNume) {//referinta const pt a evita copierea inutila
         if (nouNume.empty()) {
             throw runtime_error("Numele nu poate fi gol!");
         }
@@ -290,10 +296,10 @@ public:
             melodii.emplace_back(titlu, gen, durata, artist);
         }
 
-        cout << "Playlist-ul a fost incarcat din fisierul " << filename << ".\n";
+        cout << "Playlist-ul a fost incarcat din fisierul " << filename << ".\n"; //incarca datele despre fiecare melodie si le adauga in vectorul melodii
     }
 
-    void SortSongs() {
+    void SortSongs() { //std::sort cu functii lambda
         if (melodii.empty()) {
             cout << "Playlist-ul este gol. Nu exista nimic de sortat.\n";
             return;
@@ -327,25 +333,25 @@ public:
 };
 
 
-class PlaylistManager {
+class PlaylistManager { //singleton
 private:
-    static unique_ptr<PlaylistManager> instance;
-    vector<Playlist> playlists;
+    static unique_ptr<PlaylistManager> instance; //instanta unica a clasei
+    vector<Playlist> playlists; //stl ce stocheaza obiecte de tip playlist
 
-    PlaylistManager() {} // Constructor privat
+    PlaylistManager() {} // Constructor privat ce impiedica crearea de instante ale clasei din afara acestuia
 
 public:
     static PlaylistManager& GetInstance() {
         if (!instance) {
             instance = std::unique_ptr<PlaylistManager>(new PlaylistManager());
         }
-        return *instance;
-    }
+        return *instance; //referinta la instanta pentru a evita copierea
+    } //returneaza instanta unica a clasei
 
     void AddPlaylist(const Playlist& playlist) {
         playlists.push_back(playlist);
         cout << "Playlist \"" << playlist.getNume() << "\" adaugat cu succes.\n";
-    }
+    } //adaugare de playlist
 
     void RenamePlaylist(size_t index, const string& nouNume) {
         if (index >= playlists.size()) {
@@ -373,7 +379,7 @@ public:
 
     size_t GetPlaylistsCount() const {
         return playlists.size();
-    }
+    } //returneaza numarul de playlisturi
 
     Playlist& GetPlaylist(size_t index) {
         if (index >= playlists.size()) {
@@ -388,16 +394,16 @@ public:
         }
         return playlists[index];
     }
-    
 
+//obtinerea unui playlist dupa index
 
 };
 template <typename T>
-class StatisticiPlaylist {
+class StatisticiPlaylist { //o clasa template, poate lucra cu tipuri de date generice
     std::vector<T> valori;
 
 public:
-   
+
     void AdaugaValoare(const T& valoare) {
         valori.push_back(valoare);
     }
@@ -434,7 +440,7 @@ public:
         return *std::min_element(valori.begin(), valori.end());
     }
 
-  
+
     void AfiseazaValori() const {
         if (valori.empty()) {
             std::cout << "Nu există valori de afișat.\n";
@@ -448,7 +454,7 @@ public:
     }
 };
 
-int SelectPlaylist(PlaylistManager& manager) {
+int SelectPlaylist(PlaylistManager& manager) { //selectarea unui playlist
     manager.ShowAllPlaylists();
     cout << "Selectati numarul playlistului: ";
     int index;
@@ -457,9 +463,8 @@ int SelectPlaylist(PlaylistManager& manager) {
     if (index <= 0 || index > manager.GetPlaylistsCount()) {
         throw runtime_error("Numar de playlist invalid!");
     }
-    return index - 1; 
+    return index - 1;
 }
-
 
 void ManagePlaylist(Playlist& playlist) {
     while (true) {
@@ -478,7 +483,7 @@ void ManagePlaylist(Playlist& playlist) {
         cout << "Alege o optiune: ";
         int optiune;
         cin >> optiune;
-        cin.ignore();
+        cin.ignore(); //elimina orice caracter ramas in buffer pentru a preveni problemele la urmatoarea citire de text
 
         try {
             switch (optiune) {
@@ -598,7 +603,7 @@ void ManagePlaylist(Playlist& playlist) {
 
 
 // Funcția CreatePlaylist
-unique_ptr<PlaylistManager> PlaylistManager::instance = nullptr;
+unique_ptr<PlaylistManager> PlaylistManager::instance = nullptr; //initializeaza instanta statica
 
 Playlist CreatePlaylist() {
     Playlist playlist;
@@ -698,14 +703,14 @@ Playlist CreatePlaylist() {
 
 
 int main() {
-    PlaylistManager& manager = PlaylistManager::GetInstance();
+    PlaylistManager& manager = PlaylistManager::GetInstance(); //creaza o referinta la instanta unica, se asigura ca exista o sg instanta
 
     while (true) {
         cout << "\n********** Manager Playlist **********\n";
         cout << "1. Adauga un playlist\n";
         cout << "2. Afiseaza toate playlisturile\n";
         cout << "3. Gestionati un playlist\n";
-        cout << "4. Redenumește un playlist\n";
+        cout << "4. Redenumeste un playlist\n";
         cout << "5. Iesire\n";
         cout << "Alege o optiune: ";
         int optiune;
@@ -766,5 +771,11 @@ int main() {
     }
 
     return 0;
-} 
+}
 
+
+
+// TIP See CLion help at <a
+// href="https://www.jetbrains.com/help/clion/">jetbrains.com/help/clion/</a>.
+//  Also, you can try interactive lessons for CLion by selecting
+//  'Help | Learn IDE Features' from the main menu.
